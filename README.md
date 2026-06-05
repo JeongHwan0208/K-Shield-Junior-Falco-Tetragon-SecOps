@@ -1,0 +1,300 @@
+# K-Shield Junior Falco & Tetragon SecOps Pipeline
+
+> K-Shield Junior 16기 정보보호운영 트랙 프로젝트  
+> Kubernetes 환경에서 공급망 공격 이후 발생하는 런타임 위협 행위를 Falco와 Tetragon으로 탐지·차단하고, Slack·OpenSearch·Grafana 기반 SecOps 파이프라인으로 시각화한 프로젝트입니다.
+
+<br/>
+
+## Overview
+
+본 저장소는 **K-Shield Junior 16기 정보보호운영 트랙 팀 프로젝트**를 개인 포트폴리오용으로 재구성한 저장소입니다.
+
+프로젝트는 Cloud-Native 환경에서 공급망 공격으로 오염된 애플리케이션이 정상 GitOps 배포 흐름을 통해 Kubernetes Pod로 배포된 이후, 컨테이너 내부에서 발생하는 런타임 위협 행위를 실시간으로 탐지하고 고위험 행위는 차단하는 것을 목표로 합니다.
+
+주요 흐름은 다음과 같습니다.
+
+1. GitLab과 Argo CD 기반 GitOps 자동 배포
+2. 공급망 오염이 반영된 취약 Node.js 애플리케이션 배포
+3. Falco 기반 런타임 위협 행위 탐지
+4. Tetragon 기반 IMDS 접근 차단
+5. Slack, OpenSearch, Grafana 기반 SecOps 분석 및 시각화
+
+<br/>
+
+## Project Info
+
+| 항목 | 내용 |
+| --- | --- |
+| 과정 | K-Shield Junior 16기 |
+| 트랙 | 정보보호운영 / SecOps |
+| 프로젝트명 | 공급망 공격 이후 탐지·차단 SecOps 자동화 파이프라인 구축 |
+| 주제 | Falco·Tetragon 기반 Kubernetes Runtime Security Pipeline |
+| 수행 기간 | 2026.05.04 ~ 2026.05.21 |
+| 팀 | 2조 |
+| 역할 | PM / 팀장 |
+| 팀원 | 최정환, 박현수, 이준혁, 윤지환, 고성운 |
+
+<br/>
+
+## My Role
+
+본 프로젝트에서 저는 **PM / 팀장**으로 참여했으며, 전체 아키텍처 설계와 시나리오 구성, 보안 탐지·차단 정책 설계, 보고서 및 발표 자료 정리를 담당했습니다.
+
+- 프로젝트 주제 선정 및 전체 범위 관리
+- Kubernetes 기반 보안 테스트 환경 설계
+- GitOps 기반 공급망 공격 시나리오 설계
+- 취약 Node.js 테스트 애플리케이션 구성
+- Falco 기반 런타임 탐지 룰 설계
+- Tetragon 기반 IMDS 접근 차단 정책 구성
+- Kafka, NiFi, OpenSearch, Grafana 기반 SecOps 파이프라인 설계
+- MITRE ATT&CK 기반 탐지 이벤트 매핑
+- 최종 보고서 및 발표 자료 작성 총괄
+
+<br/>
+
+## Architecture
+
+### Data Flow Architecture
+
+![Data Flow Architecture](docs/images/architecture-dataflow.png)
+
+### Infrastructure Architecture
+
+![Infrastructure Architecture](docs/images/architecture-infra.png)
+
+<br/>
+
+## Tech Stack
+
+| Category | Tools |
+| --- | --- |
+| Container / Orchestration | Docker, Kubernetes, Cilium |
+| GitOps | GitLab, Argo CD |
+| Runtime Detection | Falco, eBPF |
+| Runtime Response | Tetragon |
+| Event Pipeline | Kafka, NiFi |
+| Storage / Search | OpenSearch |
+| Visualization | Grafana, OpenSearch Dashboards |
+| Alerting | Slack Webhook |
+| Test Workload | Node.js, Express |
+
+<br/>
+
+## Scenario
+
+### Scenario 1. Supply Chain Attack Simulation
+
+공급망 오염 시나리오는 정상적인 배포 흐름을 악용하는 상황을 가정했습니다.
+
+- Node.js 애플리케이션에 악성 `postinstall` 흐름 주입
+- 내부 메트릭 엔드포인트를 악용한 명령 실행 경로 구성
+- GitOps 매니페스트 변경 후 Argo CD 자동 동기화
+- 오염된 이미지가 Kubernetes Pod로 배포되는 흐름 재현
+
+> Public repository에서는 안전을 위해 자동 실행성 `postinstall` 데모 코드를 비활성화했습니다.
+
+### Scenario 2. Runtime Detection & Blocking
+
+오염된 Pod 내부에서 발생할 수 있는 런타임 위협 행위를 탐지·차단했습니다.
+
+| Attack Behavior | Detection / Response |
+| --- | --- |
+| RCE command execution | Falco detection |
+| Sensitive file read | Falco detection |
+| ServiceAccount token access | Falco detection |
+| IMDS access attempt | Falco detection + Tetragon Sigkill |
+
+<br/>
+
+## Detection Rules
+
+### Falco
+
+Falco는 컨테이너 내부에서 발생하는 주요 위협 행위를 탐지하는 역할을 담당했습니다.
+
+주요 탐지 룰:
+
+- `Scenario RCE in Container`
+- `Scenario Sensitive File Read`
+- `ServiceAccount Token Read`
+- `IMDS Access Attempt`
+
+Falco custom rules:
+
+```text
+security/falco/custom-rules.yaml
+```
+
+### Tetragon
+
+Tetragon은 IMDS 접근과 같은 고위험 행위를 커널 레벨에서 차단하는 역할을 담당했습니다.
+
+주요 차단 정책:
+
+```text
+security/tetragon/block-imds-connect.yaml
+security/tetragon/block-imds-udp.yaml
+```
+
+<br/>
+
+## Detection & Response Results
+
+### Grafana Dashboard
+
+![Grafana Dashboard](docs/images/grafana-dashboard.png)
+
+### Falco Slack Alert
+
+![Falco Slack Alert](docs/images/falco-slack-alert.png)
+
+### Tetragon Slack Alert
+
+![Tetragon Slack Alert](docs/images/tetragon-slack-alert.png)
+
+### OpenSearch Falco Events
+
+![OpenSearch Falco Events](docs/images/opensearch-falco-events.png)
+
+### OpenSearch Tetragon Events
+
+![OpenSearch Tetragon Events](docs/images/opensearch-tetragon-events.png)
+
+<br/>
+
+## Repository Structure
+
+```text
+K-Shield-Junior-Falco-Tetragon-SecOps
+├─ app/
+│  └─ kshield-shop/
+│     ├─ Dockerfile
+│     ├─ index.js
+│     ├─ package.json
+│     ├─ public/
+│     └─ .gitlab-ci.yml
+│
+├─ gitops/
+│  ├─ argocd/
+│  │  └─ kshield-shop-app.yaml
+│  └─ manifests/
+│     ├─ deployment.yaml
+│     └─ service.yaml
+│
+├─ security/
+│  ├─ falco/
+│  │  └─ custom-rules.yaml
+│  └─ tetragon/
+│     ├─ block-imds-connect.yaml
+│     └─ block-imds-udp.yaml
+│
+├─ scripts/
+│  └─ attack-test.sh
+│
+├─ docs/
+│  └─ images/
+│
+├─ README.md
+└─ .gitignore
+```
+
+<br/>
+
+## Key Files
+
+| Path | Description |
+| --- | --- |
+| `app/kshield-shop/` | 공급망 공격 시나리오에 사용한 Node.js 테스트 워크로드 |
+| `gitops/argocd/kshield-shop-app.yaml` | Argo CD Application 설정 |
+| `gitops/manifests/deployment.yaml` | Kubernetes Deployment 매니페스트 |
+| `gitops/manifests/service.yaml` | Kubernetes Service 매니페스트 |
+| `security/falco/custom-rules.yaml` | Falco 커스텀 탐지 룰 |
+| `security/tetragon/block-imds-connect.yaml` | IMDS TCP 접근 차단 정책 |
+| `security/tetragon/block-imds-udp.yaml` | IMDS UDP 접근 차단 정책 |
+| `scripts/attack-test.sh` | 공격 행위 검증용 테스트 스크립트 |
+
+<br/>
+
+## How to Test
+
+> 이 저장소는 포트폴리오용으로 재구성된 저장소입니다.  
+> 전체 클러스터 구축 과정은 포함하지 않고, 핵심 애플리케이션·GitOps 매니페스트·탐지/차단 정책·검증 스크립트를 중심으로 정리했습니다.
+
+### 1. Deploy Test Workload
+
+```bash
+kubectl apply -f gitops/manifests/deployment.yaml
+kubectl apply -f gitops/manifests/service.yaml
+```
+
+### 2. Apply Falco Rules
+
+```bash
+kubectl apply -f security/falco/custom-rules.yaml
+```
+
+### 3. Apply Tetragon Policies
+
+```bash
+kubectl apply -f security/tetragon/block-imds-connect.yaml
+kubectl apply -f security/tetragon/block-imds-udp.yaml
+```
+
+### 4. Run Attack Test
+
+```bash
+chmod +x scripts/attack-test.sh
+TARGET_URL="http://<NODE_IP>:30080" ./scripts/attack-test.sh
+```
+
+<br/>
+
+## MITRE ATT&CK Mapping
+
+| Behavior | Technique |
+| --- | --- |
+| Command execution in container | T1059.004 - Unix Shell |
+| Sensitive file access | T1552.001 - Credentials In Files |
+| ServiceAccount token access | T1552.001 - Credentials In Files |
+| IMDS access attempt | T1552.005 - Cloud Instance Metadata API |
+
+<br/>
+
+## Public Repository Safety Notes
+
+Public 저장소 업로드를 위해 다음 항목은 제거하거나 비활성화했습니다.
+
+- 실제 GCP 외부 IP
+- Slack Webhook URL
+- GitLab Token
+- Docker Registry Token
+- kubeconfig
+- Secret YAML
+- 자동 실행성 `postinstall` 데모 코드
+- 대용량 보고서 및 발표자료 PDF
+
+<br/>
+
+## Documents
+
+최종 보고서와 발표자료는 용량 및 인프라 정보 노출 문제로 공개 저장소에는 포함하지 않았습니다.
+
+대신 주요 아키텍처와 탐지 결과 화면은 `docs/images/`에 정리했습니다.
+
+<br/>
+
+## What I Learned
+
+이 프로젝트를 통해 단순한 애플리케이션 취약점 탐지를 넘어, Cloud-Native 환경에서 실제 운영 흐름과 연결된 보안 탐지·차단 구조를 설계하는 경험을 했습니다.
+
+특히 공급망 공격이 정상 배포 흐름을 악용할 수 있다는 점과, 배포 이후 컨테이너 내부 행위를 런타임 관점에서 관찰해야 한다는 점을 실습 기반으로 확인했습니다.
+
+또한 Falco와 Tetragon의 역할을 분리하여, Falco는 탐지와 이벤트 수집에 집중하고 Tetragon은 고위험 행위 차단에 활용하는 구조를 설계했습니다.
+
+<br/>
+
+## License
+
+This repository is a portfolio version of a K-Shield Junior 16th SecOps team project.
+
+For educational and portfolio purposes only.
