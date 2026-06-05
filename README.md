@@ -76,10 +76,10 @@
 | GitOps | GitLab, Argo CD |
 | Runtime Detection | Falco, eBPF |
 | Runtime Response | Tetragon |
-| Event Pipeline | Kafka, NiFi |
+| Event Pipeline | Kafka, NiFi, Filebeat |
 | Storage / Search | OpenSearch |
 | Visualization | Grafana, OpenSearch Dashboards |
-| Alerting | Slack Webhook |
+| Alerting | Slack |
 | Test Workload | Node.js, Express |
 
 <br/>
@@ -104,7 +104,7 @@
 핵심 검증 포인트는 공격자가 운영 서버에 직접 접속하는 것이 아니라,  
 **오염된 산출물이 정상적인 GitOps 배포 체인을 거쳐 운영 Pod까지 도달할 수 있는지 확인하는 것**입니다.
 
-> Public repository에서는 안전을 위해 자동 실행성 `postinstall` 데모 코드를 비활성화했습니다.
+> 본 저장소에서는 자동 실행을 방지하기 위해 `postinstall` 데모 코드를 비활성화했습니다.
 
 ### Scenario 2. Runtime Detection & Blocking
 
@@ -201,11 +201,15 @@ K-Shield-Junior-Falco-Tetragon-SecOps
 │     ├─ block-imds-connect.yaml
 │     └─ block-imds-udp.yaml
 │
-├─ scripts/
-│  └─ attack-test.sh
-│
 ├─ docs/
 │  └─ images/
+│     ├─ architecture-dataflow.png
+│     ├─ architecture-infra.png
+│     ├─ grafana-dashboard.png
+│     ├─ falco-slack-alert.png
+│     ├─ tetragon-slack-alert.png
+│     ├─ opensearch-falco-events.png
+│     └─ opensearch-tetragon-events.png
 │
 ├─ README.md
 └─ .gitignore
@@ -224,23 +228,30 @@ K-Shield-Junior-Falco-Tetragon-SecOps
 | `security/falco/custom-rules.yaml` | Falco 커스텀 탐지 룰 |
 | `security/tetragon/block-imds-connect.yaml` | IMDS TCP 접근 차단 정책 |
 | `security/tetragon/block-imds-udp.yaml` | IMDS UDP 접근 차단 정책 |
-| `scripts/attack-test.sh` | 공격 행위 검증용 테스트 스크립트 |
+| `docs/images/` | 아키텍처 및 탐지·차단 결과 이미지 |
 
 <br/>
 
-## How to Test
+## How to Review
 
 > 이 저장소는 포트폴리오용으로 재구성된 저장소입니다.  
-> 전체 클러스터 구축 과정은 포함하지 않고, 핵심 애플리케이션·GitOps 매니페스트·탐지/차단 정책·검증 스크립트를 중심으로 정리했습니다.
+> 전체 클러스터 구축 과정과 공격 검증 명령은 공개 저장소에 포함하지 않고, 핵심 애플리케이션·GitOps 매니페스트·탐지/차단 정책·결과 이미지를 중심으로 정리했습니다.
 
-### 1. Deploy Test Workload
+### 1. Review Test Workload
 
 ```bash
-kubectl apply -f gitops/manifests/deployment.yaml
-kubectl apply -f gitops/manifests/service.yaml
+ls app/kshield-shop
 ```
 
-### 2. Review Falco Rules
+### 2. Review GitOps Manifests
+
+```bash
+cat gitops/argocd/kshield-shop-app.yaml
+cat gitops/manifests/deployment.yaml
+cat gitops/manifests/service.yaml
+```
+
+### 3. Review Falco Rules
 
 ```bash
 cat security/falco/custom-rules.yaml
@@ -248,18 +259,11 @@ cat security/falco/custom-rules.yaml
 
 > Falco rules should be mounted through a ConfigMap or Helm values depending on the Falco deployment method.
 
-### 3. Apply Tetragon Policies
+### 4. Review Tetragon Policies
 
 ```bash
-kubectl apply -f security/tetragon/block-imds-connect.yaml
-kubectl apply -f security/tetragon/block-imds-udp.yaml
-```
-
-### 4. Run Attack Test
-
-```bash
-chmod +x scripts/attack-test.sh
-TARGET_URL="http://<NODE_IP>:30080" ./scripts/attack-test.sh
+cat security/tetragon/block-imds-connect.yaml
+cat security/tetragon/block-imds-udp.yaml
 ```
 
 <br/>
@@ -272,29 +276,6 @@ TARGET_URL="http://<NODE_IP>:30080" ./scripts/attack-test.sh
 | Sensitive file access | T1552.001 - Credentials In Files |
 | ServiceAccount token access | T1552.001 - Credentials In Files |
 | IMDS access attempt | T1552.005 - Cloud Instance Metadata API |
-
-<br/>
-
-## Documents
-
-최종 보고서와 발표자료는 용량 및 인프라 정보 노출 문제로 공개 저장소에는 포함하지 않았습니다.
-
-대신 주요 아키텍처와 탐지 결과 화면은 `docs/images/`에 정리했습니다.
-
-<br/>
-
-## Public Repository Safety Notes
-
-Public 저장소 업로드를 위해 다음 항목은 제거하거나 비활성화했습니다.
-
-- 실제 GCP 외부 IP
-- Slack Webhook URL
-- GitLab Token
-- Docker Registry Token
-- kubeconfig
-- Secret YAML
-- 자동 실행성 `postinstall` 데모 코드
-- 대용량 보고서 및 발표자료 PDF
 
 <br/>
 
