@@ -49,7 +49,7 @@
 - 공급망 공격 이후 런타임 탐지 시나리오 설계 참여
 - Falco 기반 런타임 탐지 룰 설계 및 적용 총괄
 - RCE, 민감 파일 접근, ServiceAccount Token 접근, IMDS 접근 탐지 룰 구성
-- Falco 이벤트의 Slack, Kafka, OpenSearch, Grafana 연계 흐름 구성 지원
+- Falco 이벤트의 Slack, Kafka, NiFi, OpenSearch, Grafana 연계 흐름 구성 지원
 - MITRE ATT&CK 기반 Falco 탐지 이벤트 매핑
 - 최종 보고서 및 발표자료 내용 보완, 검토 지원
 - 프로젝트 최종 발표 담당
@@ -88,12 +88,21 @@
 
 ### Scenario 1. Supply Chain Attack Simulation
 
-공급망 오염 시나리오는 정상적인 배포 흐름을 악용하는 상황을 가정했습니다.
+시나리오 1은 **GitLab 저장소 및 배포 권한이 탈취된 상황을 전제**로,  
+공격자가 오염된 코드와 매니페스트 변경을 정상 GitOps 배포 흐름에 태우는 과정을 재현했습니다.
 
-- Node.js 애플리케이션에 악성 `postinstall` 흐름 주입
-- 내부 메트릭 엔드포인트를 악용한 명령 실행 경로 구성
-- GitOps 매니페스트 변경 후 Argo CD 자동 동기화
-- 오염된 이미지가 Kubernetes Pod로 배포되는 흐름 재현
+본 프로젝트에서 실제 npm 악성 패키지 게시, GitLab 계정 탈취, 클라우드 자격 증명 탈취 자체는 수행하지 않았습니다.  
+대신 공격자가 이미 저장소 및 배포 권한을 확보한 상황을 가정하고, 다음 흐름을 검증했습니다.
+
+- `package.json`의 `postinstall` 스크립트가 변조된 상황 가정
+- 내부 진단 기능으로 위장한 백도어성 엔드포인트 구성
+- 오염된 Docker 이미지 빌드 및 Registry Push
+- Kubernetes Deployment의 이미지 태그를 오염 이미지 태그로 변경
+- Argo CD가 GitLab 저장소의 매니페스트 변경을 정상 변경으로 인식
+- Argo CD 자동 동기화를 통해 오염된 Pod가 Kubernetes 환경에 배포되는 과정 검증
+
+핵심 검증 포인트는 공격자가 운영 서버에 직접 접속하는 것이 아니라,  
+**오염된 산출물이 정상적인 GitOps 배포 체인을 거쳐 운영 Pod까지 도달할 수 있는지 확인하는 것**입니다.
 
 > Public repository에서는 안전을 위해 자동 실행성 `postinstall` 데모 코드를 비활성화했습니다.
 
@@ -106,7 +115,7 @@
 | RCE command execution | Falco detection |
 | Sensitive file read | Falco detection |
 | ServiceAccount token access | Falco detection |
-| IMDS access attempt | Falco detection + Tetragon Sigkill |
+| IMDS access attempt | Falco detection / Tetragon inline blocking |
 
 <br/>
 
@@ -231,11 +240,13 @@ kubectl apply -f gitops/manifests/deployment.yaml
 kubectl apply -f gitops/manifests/service.yaml
 ```
 
-### 2. Apply Falco Rules
+### 2. Review Falco Rules
 
 ```bash
-kubectl apply -f security/falco/custom-rules.yaml
+cat security/falco/custom-rules.yaml
 ```
+
+> Falco rules should be mounted through a ConfigMap or Helm values depending on the Falco deployment method.
 
 ### 3. Apply Tetragon Policies
 
@@ -262,6 +273,28 @@ TARGET_URL="http://<NODE_IP>:30080" ./scripts/attack-test.sh
 | ServiceAccount token access | T1552.001 - Credentials In Files |
 | IMDS access attempt | T1552.005 - Cloud Instance Metadata API |
 
+<br/>
+
+## Documents
+
+최종 보고서와 발표자료는 용량 및 인프라 정보 노출 문제로 공개 저장소에는 포함하지 않았습니다.
+
+대신 주요 아키텍처와 탐지 결과 화면은 `docs/images/`에 정리했습니다.
+
+<br/>
+
+## Public Repository Safety Notes
+
+Public 저장소 업로드를 위해 다음 항목은 제거하거나 비활성화했습니다.
+
+- 실제 GCP 외부 IP
+- Slack Webhook URL
+- GitLab Token
+- Docker Registry Token
+- kubeconfig
+- Secret YAML
+- 자동 실행성 `postinstall` 데모 코드
+- 대용량 보고서 및 발표자료 PDF
 
 <br/>
 
@@ -271,7 +304,7 @@ TARGET_URL="http://<NODE_IP>:30080" ./scripts/attack-test.sh
 
 특히 공급망 공격이 정상 배포 흐름을 악용할 수 있다는 점과, 배포 이후 컨테이너 내부 행위를 런타임 관점에서 관찰해야 한다는 점을 실습 기반으로 확인했습니다.
 
-또한 Falco와 Tetragon의 역할을 분리하여, Falco는 탐지와 이벤트 수집에 집중하고 Tetragon은 고위험 행위 차단에 활용하는 구조를 설계했습니다.
+또한 Falco와 Tetragon의 역할을 분리하여, Falco는 탐지와 이벤트 수집에 집중하고 Tetragon은 고위험 행위 차단에 활용하는 구조를 이해했습니다.
 
 <br/>
 
