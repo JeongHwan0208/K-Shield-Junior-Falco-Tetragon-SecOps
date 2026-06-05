@@ -38,17 +38,21 @@
 
 ## My Role
 
-본 프로젝트에서 저는 **PM / 팀장**으로 참여했으며, 전체 아키텍처 설계와 시나리오 구성, 보안 탐지·차단 정책 설계, 보고서 및 발표 자료 정리를 담당했습니다.
+본 프로젝트에서 저는 **PM / 팀장**으로 참여했으며, 전체 인프라 구성과 Falco 기반 런타임 탐지 영역을 중심으로 담당했습니다.  
+또한 최종 발표를 맡았고, 보고서와 발표자료 작성 과정에서는 내용 보완 및 최종 검토를 지원했습니다.
 
-- 프로젝트 주제 선정 및 전체 범위 관리
-- Kubernetes 기반 보안 테스트 환경 설계
-- GitOps 기반 공급망 공격 시나리오 설계
-- 취약 Node.js 테스트 애플리케이션 구성
-- Falco 기반 런타임 탐지 룰 설계
-- Tetragon 기반 IMDS 접근 차단 정책 구성
-- Kafka, NiFi, OpenSearch, Grafana 기반 SecOps 파이프라인 설계
-- MITRE ATT&CK 기반 탐지 이벤트 매핑
-- 최종 보고서 및 발표 자료 작성 총괄
+- 프로젝트 주제 선정 및 전체 방향성 논의 참여
+- GCP 기반 Kubernetes 클러스터 인프라 구성
+- Master / Worker Node 역할 분리 및 테스트 환경 구성
+- Cilium CNI 기반 Kubernetes 네트워크 환경 구성
+- GitLab, Argo CD 기반 GitOps 배포 흐름 구성
+- 공급망 공격 이후 런타임 탐지 시나리오 설계 참여
+- Falco 기반 런타임 탐지 룰 설계 및 적용 총괄
+- RCE, 민감 파일 접근, ServiceAccount Token 접근, IMDS 접근 탐지 룰 구성
+- Falco 이벤트의 Slack, Kafka, OpenSearch, Grafana 연계 흐름 구성 지원
+- MITRE ATT&CK 기반 Falco 탐지 이벤트 매핑
+- 최종 보고서 및 발표자료 내용 보완, 검토 지원
+- 프로젝트 최종 발표 담당
 
 <br/>
 
@@ -258,28 +262,6 @@ TARGET_URL="http://<NODE_IP>:30080" ./scripts/attack-test.sh
 | ServiceAccount token access | T1552.001 - Credentials In Files |
 | IMDS access attempt | T1552.005 - Cloud Instance Metadata API |
 
-<br/>
-
-## Public Repository Safety Notes
-
-Public 저장소 업로드를 위해 다음 항목은 제거하거나 비활성화했습니다.
-
-- 실제 GCP 외부 IP
-- Slack Webhook URL
-- GitLab Token
-- Docker Registry Token
-- kubeconfig
-- Secret YAML
-- 자동 실행성 `postinstall` 데모 코드
-- 대용량 보고서 및 발표자료 PDF
-
-<br/>
-
-## Documents
-
-최종 보고서와 발표자료는 용량 및 인프라 정보 노출 문제로 공개 저장소에는 포함하지 않았습니다.
-
-대신 주요 아키텍처와 탐지 결과 화면은 `docs/images/`에 정리했습니다.
 
 <br/>
 
