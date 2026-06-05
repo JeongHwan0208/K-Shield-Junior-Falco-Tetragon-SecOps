@@ -1,0 +1,38 @@
+# macOS
+.DS_Store
+__MACOSX/
+._*
+
+# Git
+.git/
+
+# Node
+node_modules/
+npm-debug.log*
+
+# Environment / Secrets
+.env
+*.env
+*.key
+*.pem
+*.crt
+kubeconfig
+config
+credentials
+secret.yaml
+secrets.yaml
+*-secret.yaml
+
+# Logs
+*.log
+
+# Build
+dist/
+build/
+
+# Archives
+*.zip
+
+# Large documents
+docs/*.pdf
+docs/archive/

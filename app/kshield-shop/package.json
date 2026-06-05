@@ -1,0 +1,22 @@
+{
+  "name": "k-shield-shop",
+  "version": "1.0.1",
+  "description": "E-commerce demo app for K-Shield SecOps project",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "postinstall": "echo 'postinstall demo disabled in public repository'"
+  },
+  "dependencies": {
+    "axios": "0.21.1",
+    "express": "^4.18.2"
+  },
+  "keywords": [
+    "k-shield",
+    "security",
+    "demo",
+    "kubernetes"
+  ],
+  "author": "K-Shield Junior 16기 2조",
+  "license": "MIT"
+}
